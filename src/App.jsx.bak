@@ -1,0 +1,36 @@
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AdminDashboard from "./pages/AdminDashboard";
+import PoliceDashboard from "./pages/PoliceDashboard";
+import ReporterDashboard from "./pages/ReporterDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+export default function App(){
+  return (
+    <>
+      <Navbar />
+      <div className="container" style={{paddingTop: 16}}>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/police" element={<PoliceDashboard />} />
+          <Route path="/reporter" element={<ReporterDashboard />} />
+
+          {/* fallback */}
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </div>
+    </>
+  );
+}
