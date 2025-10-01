@@ -1,89 +1,70 @@
-import { NavLink, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { clearAuth } from "../utils/auth";
-import "./navbar.css";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getToken, getRole, clearAuth } from "../utils/auth"; // ✅ helpers
 
 export default function Navbar() {
+  const [token, setToken] = useState(getToken());
+  const [role, setRole] = useState(getRole());
   const navigate = useNavigate();
 
-  // ✅ pull token + role from localStorage/sessionStorage
-  const token =
-    localStorage.getItem("token") || sessionStorage.getItem("token");
-  const role =
-    localStorage.getItem("role") || sessionStorage.getItem("role");
+  useEffect(() => {
+    setToken(getToken());
+    setRole(getRole());
+  }, []);
 
   const handleLogout = () => {
-    clearAuth(); // ✅ clears auth from both localStorage + sessionStorage
-    toast.info("You’ve been logged out ✅");
-    navigate("/");
+    clearAuth(); // clear token + role
+    setToken(null);
+    setRole(null);
+    navigate("/"); // back to login
   };
 
-  // ✅ compute dashboard route based on role
-  const dashboardRoute =
-    role === "reporter"
-      ? "/reporter/dashboard"
-      : role === "police"
-      ? "/police/dashboard"
-      : role === "admin"
-      ? "/admin/dashboard"
-      : "/";
-
   return (
-    <header className="navbar">
-      <div className="nav-inner">
-        {/* Logo / Brand */}
-        <div className="brand" onClick={() => navigate("/")} role="button">
-          <div className="logo" aria-hidden="true" />
-          <div className="title">
-            Device <span>Tracker</span>
-          </div>
-        </div>
+    <nav className="bg-blue-600 p-4 text-white flex justify-between items-center shadow-md">
+      {/* Left: Brand */}
+      <Link to="/" className="text-xl font-bold">
+        Device Tracker
+      </Link>
 
-        {/* Right-side actions */}
-        <nav className="nav-actions">
-          {!token ? (
-            // When NOT logged in → show login/register for all roles
-            <>
-              {/* Reporter */}
-              <NavLink className="btn btn-primary" to="/reporter/login">
-                Reporter Login
-              </NavLink>
-              <NavLink className="btn btn-outline" to="/reporter/register">
-                Reporter Register
-              </NavLink>
-
-              {/* Police */}
-              <NavLink className="btn btn-secondary" to="/police/login">
-                Police Login
-              </NavLink>
-              <NavLink className="btn btn-outline" to="/police/register">
-                Police Register
-              </NavLink>
-
-              {/* Admin */}
-              <NavLink className="btn btn-danger" to="/admin/login">
-                Admin Login
-              </NavLink>
-              <NavLink className="btn btn-outline" to="/admin/register">
-                Admin Register
-              </NavLink>
-            </>
-          ) : (
-            // When logged in → show role + dashboard + logout
-            <>
-              <span className="user-role">
-                Logged in as <strong>{role}</strong>
-              </span>
-              <NavLink className="btn btn-primary" to={dashboardRoute}>
+      {/* Right: Menu */}
+      <div className="space-x-4">
+        {!token ? (
+          // Not logged in → show Login/Register
+          <>
+            <Link to="/" className="hover:underline">
+              Login
+            </Link>
+            <Link to="/register" className="hover:underline">
+              Register
+            </Link>
+          </>
+        ) : (
+          // Logged in → show Dashboard + Logout
+          <>
+            {role === "reporter" && (
+              <Link to="/reporter/dashboard" className="hover:underline">
                 Dashboard
-              </NavLink>
-              <button className="btn btn-secondary" onClick={handleLogout}>
-                Logout
-              </button>
-            </>
-          )}
-        </nav>
+              </Link>
+            )}
+            {role === "police" && (
+              <Link to="/police/dashboard" className="hover:underline">
+                Dashboard
+              </Link>
+            )}
+            {role === "admin" && (
+              <Link to="/admin/dashboard" className="hover:underline">
+                Dashboard
+              </Link>
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+            >
+              Logout
+            </button>
+          </>
+        )}
       </div>
-    </header>
+    </nav>
   );
 }

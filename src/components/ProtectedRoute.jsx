@@ -1,27 +1,25 @@
 import { Navigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { getToken, getRole, isTokenExpired } from "../utils/auth";
 
 export default function ProtectedRoute({ children, role }) {
   const token = getToken();
   const userRole = getRole();
 
-  if (!token) {
-    toast.warn("Please login first ❌");
+  // Not logged in
+  if (!token || !userRole) {
     return <Navigate to="/" replace />;
   }
 
+  // Token expired
   if (isTokenExpired(token)) {
-    localStorage.clear();
-    sessionStorage.clear();
-    toast.info("Session expired. Please log in again ⚠️");
     return <Navigate to="/" replace />;
   }
 
+  // Wrong role
   if (role && userRole !== role) {
-    toast.error("Access denied 🚫");
     return <Navigate to="/" replace />;
   }
 
+  // Otherwise → allow access
   return children;
 }

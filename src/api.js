@@ -4,9 +4,9 @@ import axios from "axios";
 // API CONFIG
 // =====================
 
-// ✅ Backend base URL (Netlify ENV → fallback localhost for dev)
+// ✅ Backend base URL (from Netlify ENV → fallback localhost for dev)
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000",
 });
 
 // ✅ Automatically attach JWT if available
