@@ -1,97 +1,115 @@
-import { useState, useEffect } from "react";
-import { apiReportDevice, apiGetDevices } from "../api";
+import { useState } from "react";
+import "../styles/dashboard.css";
+import "../styles/buttons.css";
+import NavBar from "../components/NavBar"; // ✅ navigation bar
+import { trackDevice, locateDevice, ringDevice } from "../utils/api"; // ✅ central API
+import { useLoading } from "../context/LoadingContext";
+import { toast } from "react-toastify";
 
-export default function ReporterDashboard(){
+export default function ReporterDashboard() {
   const [imei, setImei] = useState("");
-  const [serial, setSerial] = useState("");
-  const [description, setDescription] = useState("");
-  const [msg, setMsg] = useState("");
-  const [devices, setDevices] = useState([]);
+  const [response, setResponse] = useState(null);
 
-  // Load my devices when page loads
-  useEffect(() => {
-    apiGetDevices()
-      .then(setDevices)
-      .catch(err => console.error("Error fetching devices:", err));
-  }, []);
+  const { loading, setLoading } = useLoading();
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setMsg("");
+  const handleTrack = async () => {
+    if (!imei) return toast.error("Please enter IMEI first!");
+    setLoading(true);
     try {
-      const res = await apiReportDevice({ imei, serial, description });
-      if (res?.success) {
-        setMsg("Device reported successfully ✅");
-        setImei("");
-        setSerial("");
-        setDescription("");
-        // reload devices
-        apiGetDevices().then(setDevices);
-      } else {
-        setMsg(res?.message || "Failed to report device ❌");
-      }
+      const res = await trackDevice({ imei });
+      setResponse(res);
+      toast.success(res.message || "Device tracked successfully!");
     } catch (err) {
-      setMsg("Server error: " + err.message);
+      console.error("Track error:", err);
+      toast.error(err.response?.data?.message || "Failed to track device");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLocate = async () => {
+    if (!imei) return toast.error("Please enter IMEI first!");
+    setLoading(true);
+    try {
+      const res = await locateDevice(imei);
+      setResponse(res);
+      toast.success("Device located successfully!");
+    } catch (err) {
+      console.error("Locate error:", err);
+      toast.error(err.response?.data?.message || "Failed to locate device");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRing = async () => {
+    if (!imei) return toast.error("Please enter IMEI first!");
+    setLoading(true);
+    try {
+      const res = await ringDevice(imei);
+      setResponse(res);
+      toast.success(res.message || "Ring command sent!");
+    } catch (err) {
+      console.error("Ring error:", err);
+      toast.error(err.response?.data?.message || "Failed to ring device");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card">
-      <h1>Reporter Dashboard</h1>
+    <div className="min-h-screen bg-gray-100">
+      {/* ✅ Top navigation */}
+      <NavBar />
 
-      {/* Existing devices list */}
-      <h2>My Devices</h2>
-      {devices.length === 0 ? (
-        <p>No devices yet.</p>
-      ) : (
-        <table style={{ width: "100%", marginTop: 12 }}>
-          <thead>
-            <tr>
-              <th align="left">IMEI</th>
-              <th align="left">Serial</th>
-              <th align="left">Status</th>
-              <th align="left">Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            {devices.map((d) => (
-              <tr key={d.imei}>
-                <td>{d.imei}</td>
-                <td>{d.serial}</td>
-                <td>{d.status}</td>
-                <td>{d.description}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="dashboard-container p-6">
+        <h1 className="text-2xl font-bold mb-4 text-center">📍 Reporter Dashboard</h1>
 
-      {/* Quick report form */}
-      <h2 style={{ marginTop: "20px" }}>Report a New Device</h2>
-      <form onSubmit={submit} style={{ maxWidth: "480px" }}>
-        <label>IMEI</label>
-        <input
-          value={imei}
-          onChange={(e) => setImei(e.target.value)}
-          required
-        />
+        <div className="flex flex-col items-center space-y-4">
+          <input
+            type="text"
+            placeholder="Enter Device IMEI"
+            value={imei}
+            onChange={(e) => setImei(e.target.value)}
+            className="w-full max-w-md p-2 border rounded-lg"
+          />
 
-        <label>Serial</label>
-        <input
-          value={serial}
-          onChange={(e) => setSerial(e.target.value)}
-        />
+          <div className="flex flex-col md:flex-row gap-4 w-full max-w-md">
+            <button
+              onClick={handleTrack}
+              disabled={loading}
+              className="btn btn-primary flex-1"
+            >
+              {loading ? "Tracking..." : "Track Device"}
+            </button>
 
-        <label>Description</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
+            <button
+              onClick={handleLocate}
+              disabled={loading}
+              className="btn btn-secondary flex-1"
+            >
+              {loading ? "Locating..." : "Locate Device"}
+            </button>
 
-        <button type="submit">Submit Report</button>
-      </form>
+            <button
+              onClick={handleRing}
+              disabled={loading}
+              className="btn btn-success flex-1"
+            >
+              {loading ? "Ringing..." : "Ring Device"}
+            </button>
+          </div>
+        </div>
 
-      {msg && <p style={{ marginTop: 8 }}>{msg}</p>}
+        {response && (
+          <div className="mt-6 w-full max-w-2xl p-4 border rounded bg-gray-50">
+            <h2 className="text-lg font-semibold mb-2">Response</h2>
+            <pre className="text-sm overflow-x-auto">
+              {JSON.stringify(response, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

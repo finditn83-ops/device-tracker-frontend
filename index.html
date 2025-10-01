@@ -1,12 +1,130 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Device Tracker Frontend</title>
-  </head>  
+<head>
+  <meta charset="UTF-8" />
+  <title>Device Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;          /* dark slate */
+      --fg: #e5e7eb;          /* light gray text */
+      --brand: #38bdf8;       /* cyan brand */
+      --primary: #3b82f6;     /* blue button */
+      --primary-hover: #2563eb;
+      --ring: rgba(59,130,246,.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: #0b1020;
+      color: var(--fg);
+    }
+
+    /* NAVBAR */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .brand .logo {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 30%, #60a5fa, #3b82f6 55%, #1d4ed8 100%);
+      box-shadow: 0 4px 14px rgba(37,99,235,.35);
+    }
+
+    .brand .title {
+      font-size: 1.05rem;
+      color: var(--fg);
+    }
+    .brand .title span { color: var(--brand); }
+
+    /* ACTIONS */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;             /* spacing between items */
+      flex-wrap: wrap;       /* wrap on small screens */
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      outline: none;
+    }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:focus-visible { box-shadow: 0 0 0 4px var(--ring); }
+
+    /* Make Reporter/Police/Admin visually distinct if you want */
+    .btn--secondary { background: #64748b; }
+    .btn--secondary:hover { background: #475569; }
+
+    /* Page demo spacing */
+    .content {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+    }
+  </style>
+</head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <header class="navbar">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title">Device <span>Tracker</span></div>
+      </div>
+
+      <nav class="nav-actions" aria-label="Login options">
+        <!-- Use your real routes. If you use one login page, pass role via query params -->
+        <a class="btn" href="/auth/login?role=reporter">Login Reporter</a>
+        <a class="btn btn--secondary" href="/auth/login?role=police">Login Police</a>
+        <a class="btn" href="/auth/login?role=admin">Login Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="content">
+    <h1>Welcome</h1>
+    <p>This is a demo layout. Replace with your actual content.</p>
+  </main>
 </body>
 </html>

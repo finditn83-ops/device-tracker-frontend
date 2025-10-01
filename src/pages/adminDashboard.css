@@ -1,0 +1,42 @@
+.dashboard-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.dashboard-container h1 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.dashboard-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.dashboard-container button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #10b981;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dashboard-container button:hover {
+  background: #059669;
+}
+
+.dashboard-response {
+  margin-top: 20px;
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}

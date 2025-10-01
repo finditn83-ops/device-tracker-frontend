@@ -1,77 +1,88 @@
-// src/api.js
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import axios from "axios";
 
-function authHeaders() {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+// =====================
+// API CONFIG
+// =====================
 
-async function request(path, { method = "GET", body, headers = {} } = {}) {
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders(),
-      ...headers,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+// ✅ Backend base URL (Netlify ENV → fallback localhost for dev)
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+});
 
-  // auto-logout on unauthorized
-  if (res.status === 401) {
-    localStorage.clear();
-    // hard redirect to login
-    window.location.href = "/";
-    throw new Error("Unauthorized");
+// ✅ Automatically attach JWT if available
+API.interceptors.request.use((config) => {
+  const auth = JSON.parse(localStorage.getItem("auth")) || null;
+  if (auth?.token) {
+    config.headers.Authorization = `Bearer ${auth.token}`;
   }
+  return config;
+});
 
-  // try parse JSON
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { ok: res.ok, status: res.status, text };
-  }
-}
+// =====================
+// AUTH
+// =====================
 
-/* ===== Auth ===== */
-export function apiLogin(email, password) {
-  return request("/login", { method: "POST", body: { email, password } });
-}
+// Frontend: /auth/login → Backend: /auth/login
+export const login = async (email, password, username) => {
+  const res = await API.post("/auth/login", { email, username, password });
+  return res.data;
+};
 
-export function apiRegister(email, password, role = "reporter") {
-  return request("/register", { method: "POST", body: { email, password, role } });
-}
+// Frontend: /register → Backend: /auth/register
+export const register = async (username, email, password, role) => {
+  const res = await API.post("/auth/register", { username, email, password, role });
+  return res.data;
+};
 
-export function apiForgotPassword(email) {
-  return request("/forgot-password", { method: "POST", body: { email } });
-}
+// =====================
+// ADMIN + RESET FLOW
+// =====================
 
-export function apiResetPassword(token, newPassword) {
-  return request("/reset-password", { method: "POST", body: { token, newPassword } });
-}
+// ✅ Step 1: Request reset link
+export const requestPasswordReset = async (targetEmail) => {
+  const res = await API.post("/reset-password", { targetEmail });
+  return res.data;
+};
 
-/* ===== Reports / Devices / Users ===== */
-export function apiReportDevice({ imei, serial, description }) {
-  return request("/report-device", { method: "POST", body: { imei, serial, description } });
-}
+// ✅ Step 2: Complete reset
+export const resetPassword = async (token, newPassword) => {
+  const res = await API.post("/reset-password", { token, newPassword });
+  return res.data;
+};
 
-export function apiGetReports() {
-  return request("/reports");
-}
+// =====================
+// REPORTER
+// =====================
 
-export function apiGetUsers() {
-  return request("/users");
-}
+// Frontend: /reporter/track → Backend: /track-device
+export const trackDevice = async (deviceData) => {
+  const res = await API.post("/track-device", deviceData);
+  return res.data;
+};
 
-export function apiGetDevices() {
-  return request("/devices");
-}
+// Frontend: /reporter/locate/:id → Backend: /device/:imei/locate
+export const locateDevice = async (imei) => {
+  const res = await API.get(`/device/${imei}/locate`);
+  return res.data;
+};
 
-export function apiLocate(imei) {
-  return request(`/device/${imei}/locate`);
-}
+// Frontend: /reporter/ring → Backend: /device/:imei/ring
+export const ringDevice = async (imei) => {
+  const res = await API.post(`/device/${imei}/ring`, {});
+  return res.data;
+};
 
-export function apiRing(imei) {
-  return request(`/device/${imei}/ring`, { method: "POST" });
-}
+// =====================
+// POLICE
+// =====================
+
+// Frontend: /police/device/:id → Backend: /device/:imei
+export const getDevice = async (imei) => {
+  const res = await API.get(`/device/${imei}`);
+  return res.data;
+};
+
+// =====================
+// EXPORT DEFAULT
+// =====================
+export default API;

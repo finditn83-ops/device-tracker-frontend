@@ -1,76 +1,74 @@
-import { useEffect, useState } from "react";
-import { apiGetReports, apiLocate, apiRing } from "../api";
+import { useState } from "react";
+import "../styles/dashboard.css";
+import "../styles/buttons.css";
+import NavBar from "../components/NavBar"; // ✅ NavBar
+import { getDevice } from "../utils/api";  // ✅ use central API
+import { useLoading } from "../context/LoadingContext";
+import { toast } from "react-toastify";
 
 export default function PoliceDashboard() {
-  const [reports, setReports] = useState([]);
-  const [msg, setMsg] = useState("");
+  const [imei, setImei] = useState("");
+  const [deviceInfo, setDeviceInfo] = useState(null);
 
-  // load all reports on mount
-  useEffect(() => {
-    apiGetReports()
-      .then(setReports)
-      .catch((err) => console.error("Error fetching reports:", err));
-  }, []);
+  const { loading, setLoading } = useLoading();
 
-  const markRecovered = async (id) => {
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!imei) return toast.error("Please enter an IMEI number!");
+    setLoading(true);
+
     try {
-      // This assumes you have a backend endpoint like:
-      // PATCH /reports/:id { status: "Recovered" }
-      const res = await fetch(`http://localhost:3000/reports/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Recovered" }),
-      });
-      if (!res.ok) throw new Error("Failed to update");
-      setMsg("Device marked as Recovered ✅");
-      // refresh reports
-      apiGetReports().then(setReports);
+      const res = await getDevice(imei);
+      setDeviceInfo(res);
+      toast.success("✅ Device found!");
     } catch (err) {
-      setMsg("Error: " + err.message);
+      console.error("Search error:", err);
+      toast.error(err.response?.data?.message || "❌ Device not found");
+      setDeviceInfo(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card">
-      <h1>Police Dashboard</h1>
-      <p>All reported devices</p>
+    <div className="min-h-screen bg-gray-100">
+      {/* ✅ Top navigation */}
+      <NavBar />
 
-      {msg && <p style={{ color: "green" }}>{msg}</p>}
+      <div className="dashboard-container p-6">
+        <h1 className="text-2xl font-bold mb-4 text-center">👮 Police Dashboard</h1>
 
-      {reports.length === 0 ? (
-        <p>No reports yet.</p>
-      ) : (
-        <table style={{ width: "100%", marginTop: 12 }}>
-          <thead>
-            <tr>
-              <th align="left">IMEI</th>
-              <th align="left">Serial</th>
-              <th align="left">Description</th>
-              <th align="left">Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => (
-              <tr key={r.id}>
-                <td>{r.imei}</td>
-                <td>{r.serial}</td>
-                <td>{r.description}</td>
-                <td>{r.status}</td>
-                <td>
-                  <button onClick={() => apiLocate(r.imei).then(() => setMsg("Locate requested"))}>
-                    Locate
-                  </button>{" "}
-                  <button onClick={() => apiRing(r.imei).then(() => setMsg("Ring requested"))}>
-                    Ring
-                  </button>{" "}
-                  <button onClick={() => markRecovered(r.id)}>Mark as Recovered</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col items-center space-y-4"
+        >
+          <input
+            type="text"
+            placeholder="Enter Device IMEI"
+            value={imei}
+            onChange={(e) => setImei(e.target.value)}
+            required
+            className="w-full max-w-md p-2 border rounded-lg"
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-secondary w-full max-w-md"
+          >
+            {loading ? "Searching..." : "View Device Info"}
+          </button>
+        </form>
+
+        {deviceInfo && (
+          <div className="mt-6 w-full max-w-2xl p-4 border rounded bg-gray-50">
+            <h2 className="text-lg font-semibold mb-2">Device Info</h2>
+            <pre className="text-sm overflow-x-auto">
+              {JSON.stringify(deviceInfo, null, 2)}
+            </pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

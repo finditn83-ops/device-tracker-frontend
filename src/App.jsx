@@ -1,73 +1,76 @@
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Suspense } from "react";
 import Navbar from "./components/Navbar";
+import LoadingSpinner from "./components/LoadingSpinner";
 
-// pages
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import PoliceDashboard from "./pages/PoliceDashboard";
+// Pages
+import Home from "./pages/Home";
+import ReporterLogin from "./pages/ReporterLogin";
+import PoliceLogin from "./pages/PoliceLogin";
+import AdminLogin from "./pages/AdminLogin";
+import ReporterRegister from "./pages/ReporterRegister";
+import PoliceRegister from "./pages/PoliceRegister";
+import AdminRegister from "./pages/AdminRegister";
 import ReporterDashboard from "./pages/ReporterDashboard";
+import PoliceDashboard from "./pages/PoliceDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import NotFound from "./pages/NotFound";
 
-// protection
+// Protected route wrapper
 import ProtectedRoute from "./components/ProtectedRoute";
 
-export default function App(){
+export default function App() {
   return (
-    <>
+    <BrowserRouter>
+      {/* ✅ Global Navbar */}
       <Navbar />
-      <div className="container" style={{ paddingTop: 16 }}>
-        <Routes>
-          {/* PUBLIC ROUTES */}
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* AUTH-ONLY (any logged-in role) */}
+      {/* ✅ Suspense fallback for lazy loading */}
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+
+          {/* Login routes */}
+          <Route path="/reporter/login" element={<ReporterLogin />} />
+          <Route path="/police/login" element={<PoliceLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* Register routes */}
+          <Route path="/reporter/register" element={<ReporterRegister />} />
+          <Route path="/police/register" element={<PoliceRegister />} />
+          <Route path="/admin/register" element={<AdminRegister />} />
+
+          {/* Dashboards (role protected) */}
           <Route
-            path="/dashboard"
+            path="/reporter/dashboard"
             element={
-              <ProtectedRoute>
-                <Dashboard />
+              <ProtectedRoute role="reporter">
+                <ReporterDashboard />
               </ProtectedRoute>
             }
           />
-
-          {/* ROLE-PROTECTED ROUTES */}
           <Route
-            path="/admin"
+            path="/police/dashboard"
             element={
-              <ProtectedRoute allow={["admin"]}>
+              <ProtectedRoute role="police">
+                <PoliceDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute role="admin">
                 <AdminDashboard />
               </ProtectedRoute>
             }
           />
 
-          <Route
-            path="/police"
-            element={
-              <ProtectedRoute allow={["police", "admin"]}>
-                <PoliceDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/reporter"
-            element={
-              <ProtectedRoute allow={["reporter", "admin"]}>
-                <ReporterDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* FALLBACK (unknown routes go to login) */}
-          <Route path="*" element={<Login />} />
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
-      </div>
-    </>
+      </Suspense>
+    </BrowserRouter>
   );
 }

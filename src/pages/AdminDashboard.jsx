@@ -1,184 +1,77 @@
-import { useEffect, useState } from "react";
-import { apiGetUsers, apiGetReports } from "../api";
+import { useState } from "react";
+import { useLoading } from "../context/LoadingContext";
+import { toast } from "react-toastify";
+import { requestPasswordReset } from "../utils/api"; // ✅ use central API
+import NavBar from "../components/NavBar";
+import "../styles/adminDashboard.css";
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState([]);
-  const [reports, setReports] = useState([]);
-  const [msg, setMsg] = useState("");
+  const [targetEmail, setTargetEmail] = useState("");
+  const [response, setResponse] = useState(null);
 
-  // new user form state
-  const [newUser, setNewUser] = useState({
-    username: "",
-    password: "",
-    role: "reporter",
-  });
+  const { loading, setLoading } = useLoading();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
-    apiGetUsers().then(setUsers).catch(console.error);
-    apiGetReports().then(setReports).catch(console.error);
-  };
-
-  // Create new user
-  const createUser = async (e) => {
+  const handleSendResetLink = async (e) => {
     e.preventDefault();
-    try {
-      const res = await fetch("http://localhost:3000/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-      if (!res.ok) throw new Error("Failed to create user");
-      setMsg("User created ✅");
-      setNewUser({ username: "", password: "", role: "reporter" });
-      loadData();
-    } catch (err) {
-      setMsg("Error: " + err.message);
-    }
-  };
+    if (!targetEmail) return toast.error("Please enter an email!");
 
-  // Delete user
-  const deleteUser = async (id) => {
+    setLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/users/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete user");
-      setMsg("User deleted ✅");
-      loadData();
+      const res = await requestPasswordReset(targetEmail);
+      setResponse(res);
+      toast.success(res.message || "✅ Reset link sent!");
+      setTargetEmail("");
     } catch (err) {
-      setMsg("Error: " + err.message);
-    }
-  };
-
-  // Reset user password
-  const resetUserPassword = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:3000/users/${id}/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: "default123" }),
-      });
-      if (!res.ok) throw new Error("Failed to reset password");
-      setMsg("Password reset to default123 ✅");
-    } catch (err) {
-      setMsg("Error: " + err.message);
-    }
-  };
-
-  // Delete report
-  const deleteReport = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:3000/reports/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete report");
-      setMsg("Report deleted ✅");
-      loadData();
-    } catch (err) {
-      setMsg("Error: " + err.message);
+      console.error("Reset request error:", err);
+      toast.error(err.response?.data?.message || "❌ Failed to send reset link");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="card">
-      <h1>Admin Dashboard</h1>
-      {msg && <p style={{ color: "green" }}>{msg}</p>}
+    <div className="min-h-screen bg-gray-100">
+      {/* ✅ Top navigation */}
+      <NavBar />
 
-      {/* Create User form */}
-      <h2>Create New User</h2>
-      <form onSubmit={createUser} style={{ maxWidth: "480px", marginBottom: "20px" }}>
-        <label>Username</label>
-        <input
-          value={newUser.username}
-          onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-          required
-        />
+      <div className="flex flex-col items-center justify-center p-6">
+        <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-md">
+          <h1 className="text-2xl font-bold mb-4 text-center">⚙️ Admin Dashboard</h1>
 
-        <label>Password</label>
-        <input
-          type="password"
-          value={newUser.password}
-          onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-          required
-        />
+          <form onSubmit={handleSendResetLink}>
+            {/* Target Email */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-700 mb-1">
+                User Email
+              </label>
+              <input
+                type="email"
+                value={targetEmail}
+                onChange={(e) => setTargetEmail(e.target.value)}
+                required
+                className="w-full p-2 border rounded-lg focus:outline-none focus:ring focus:ring-indigo-300"
+              />
+            </div>
 
-        <label>Role</label>
-        <select
-          value={newUser.role}
-          onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-        >
-          <option value="reporter">Reporter</option>
-          <option value="police">Police</option>
-          <option value="admin">Admin</option>
-        </select>
+            {/* Send Reset Link Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
+            </button>
+          </form>
 
-        <button type="submit">Create User</button>
-      </form>
-
-      {/* Users table */}
-      <h2>Manage Users</h2>
-      {users.length === 0 ? (
-        <p>No users found.</p>
-      ) : (
-        <table style={{ width: "100%", marginTop: 12 }}>
-          <thead>
-            <tr>
-              <th align="left">Username</th>
-              <th align="left">Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.username || u.email}</td>
-                <td>{u.role}</td>
-                <td>
-                  <button onClick={() => deleteUser(u.id)}>Delete</button>{" "}
-                  <button onClick={() => resetUserPassword(u.id)}>
-                    Reset Password
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {/* Reports table */}
-      <h2 style={{ marginTop: "20px" }}>Manage Reports</h2>
-      {reports.length === 0 ? (
-        <p>No reports found.</p>
-      ) : (
-        <table style={{ width: "100%", marginTop: 12 }}>
-          <thead>
-            <tr>
-              <th align="left">IMEI</th>
-              <th align="left">Serial</th>
-              <th align="left">Description</th>
-              <th align="left">Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => (
-              <tr key={r.id}>
-                <td>{r.imei}</td>
-                <td>{r.serial}</td>
-                <td>{r.description}</td>
-                <td>{r.status}</td>
-                <td>
-                  <button onClick={() => deleteReport(r.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          {/* Show response JSON if any */}
+          {response && (
+            <div className="mt-4 p-3 border rounded bg-gray-50 text-sm overflow-x-auto">
+              <h2 className="font-semibold mb-1">Response</h2>
+              <pre>{JSON.stringify(response, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

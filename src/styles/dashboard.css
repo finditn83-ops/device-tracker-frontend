@@ -1,0 +1,32 @@
+/* Dashboard container */
+.dashboard-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.dashboard-container h1 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+/* Inputs */
+.dashboard-container input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+/* Response box */
+.dashboard-response {
+  margin-top: 20px;
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+}
