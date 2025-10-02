@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import LoadingSpinner from "./components/LoadingSpinner";
 
 // Pages
-import LoginForm from "./pages/LoginForm";
-import RegisterForm from "./pages/RegisterForm";
+import LoginForm from "./components/LoginForm";   // ✅ now default page
+import RegisterForm from "./components/RegisterForm";
 import ResetPassword from "./pages/ResetPassword";
 import ReporterDashboard from "./pages/ReporterDashboard";
 import PoliceDashboard from "./pages/PoliceDashboard";
@@ -19,12 +19,14 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
-          {/* Public routes */}
+          {/* ✅ Default route → Login */}
           <Route path="/" element={<LoginForm />} />
+
+          {/* Public routes */}
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Dashboards (protected by role) */}
+          {/* Role-protected dashboards */}
           <Route
             path="/reporter/dashboard"
             element={
@@ -50,7 +52,7 @@ export default function App() {
             }
           />
 
-          {/* 404 catch-all */}
+          {/* Catch-all 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
